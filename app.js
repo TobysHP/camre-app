@@ -1,26 +1,38 @@
-// Set constraints for the video stream
-var constraints = { video: { facingMode: "user" }, audio: false };
-// Define constants
-const constraints = window.constraints = {
+/*
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree.
+ */
+
+'use strict';
+
+// Put variables in global scope to make them available to the browser console.
+const video = document.querySelector('video');
+const canvas = window.canvas = document.querySelector('canvas');
+canvas.width = 480;
+canvas.height = 360;
+
+const button = document.querySelector('button');
+button.onclick = function() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+};
+
+const constraints = {
   audio: false,
   video: true
 };
 
 function handleSuccess(stream) {
-  const cameraView = document.querySelector("#camera--view"),
-  const videoTracks = stream.getVideoTracks();
-  console.log('Got stream with constraints:', constraints);
-  console.log(`Using video device: ${videoTracks[0].label}`);
-  window.stream = stream; // make variable available to browser console
-  cameraView.srcObject = stream;
+  window.stream = stream; // make stream available to browser console
+  video.srcObject = stream;
 }
 
-async function init(e) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    handleSuccess(stream);
-    e.target.disabled = true;
-  } catch (e) {
-    handleError(e);
-  }
+function handleError(error) {
+  console.log('navigator.MediaDevices.getUserMedia error: ', error.message, error.name);
 }
+
+navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
