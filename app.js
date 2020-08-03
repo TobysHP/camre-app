@@ -1,55 +1,62 @@
-/*
- *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
-'use strict';
 
-// Put variables in global scope to make them available to the browser console.
-const constraints = window.constraints = {
-  audio: false,
-  video: true
-};
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Test Camera</title>
+        <style>
+            body {
+                background: black;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
 
-function handleSuccess(stream) {
-  const video = document.querySelector('video');
-  const videoTracks = stream.getVideoTracks();
-  console.log('Got stream with constraints:', constraints);
-  console.log(`Using video device: ${videoTracks[0].label}`);
-  window.stream = stream; // make variable available to browser console
-  video.srcObject = stream;
-}
+            video {
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+            }
+        </style>
+    </head>
 
-function handleError(error) {
-  if (error.name === 'ConstraintNotSatisfiedError') {
-    const v = constraints.video;
-    errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
-  } else if (error.name === 'PermissionDeniedError') {
-    errorMsg('Permissions have not been granted to use your camera and ' +
-      'microphone, you need to allow the page access to your devices in ' +
-      'order for the demo to work.');
-  }
-  errorMsg(`getUserMedia error: ${error.name}`, error);
-}
+    <body>
+        <video autoplay playsinline></video>
 
-function errorMsg(msg, error) {
-  const errorElement = document.querySelector('#errorMsg');
-  errorElement.innerHTML += `<p>${msg}</p>`;
-  if (typeof error !== 'undefined') {
-    console.error(error);
-  }
-}
+        <script>
+            const constraints = window.constraints = {
+                audio: false,
+                video: {
+                    width: {
+                        min: 1280,
+                        ideal: 1920,
+                        max: 2560,
+                    },
+                    height: {
+                        min: 720,
+                        ideal: 1080,
+                        max: 1440
+                    },
+                    facingMode: 'environment'
+                }
+            };
 
-async function init(e) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    handleSuccess(stream);
-    e.target.disabled = true;
-  } catch (e) {
-    handleError(e);
-  }
-}
+            async function main() {
+                try {
+                    var stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    var tracks = stream.getVideoTracks();
+                    var video = document.querySelector('video');
 
-document.querySelector('#showVideo').addEventListener('click', e => init(e));
+                    video.srcObject = stream;
+                }
+                catch(e) {
+                    console.error(e);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', main, false);
+        </script>
+    </body>
+</html>
