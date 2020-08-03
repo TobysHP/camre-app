@@ -5,34 +5,51 @@
  *  that can be found in the LICENSE file in the root of the source
  *  tree.
  */
-
 'use strict';
 
 // Put variables in global scope to make them available to the browser console.
-const video = document.querySelector('video');
-const canvas = window.canvas = document.querySelector('canvas');
-canvas.width = 480;
-canvas.height = 360;
-
-const button = document.querySelector('button');
-button.onclick = function() {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-};
-
-const constraints = {
+const constraints = window.constraints = {
   audio: false,
   video: true
 };
 
 function handleSuccess(stream) {
-  window.stream = stream; // make stream available to browser console
+  const video = document.querySelector('video');
+  const videoTracks = stream.getVideoTracks();
+  console.log('Got stream with constraints:', constraints);
+  console.log(`Using video device: ${videoTracks[0].label}`);
+  window.stream = stream; // make variable available to browser console
   video.srcObject = stream;
 }
 
 function handleError(error) {
-  console.log('navigator.MediaDevices.getUserMedia error: ', error.message, error.name);
+  if (error.name === 'ConstraintNotSatisfiedError') {
+    const v = constraints.video;
+    errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+  } else if (error.name === 'PermissionDeniedError') {
+    errorMsg('Permissions have not been granted to use your camera and ' +
+      'microphone, you need to allow the page access to your devices in ' +
+      'order for the demo to work.');
+  }
+  errorMsg(`getUserMedia error: ${error.name}`, error);
 }
 
-navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
+function errorMsg(msg, error) {
+  const errorElement = document.querySelector('#errorMsg');
+  errorElement.innerHTML += `<p>${msg}</p>`;
+  if (typeof error !== 'undefined') {
+    console.error(error);
+  }
+}
+
+async function init(e) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    handleSuccess(stream);
+    e.target.disabled = true;
+  } catch (e) {
+    handleError(e);
+  }
+}
+
+document.querySelector('#showVideo').addEventListener('click', e => init(e));
